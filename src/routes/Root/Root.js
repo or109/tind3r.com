@@ -7,7 +7,7 @@ import {
 
 import Loader from 'components/Loader';
 
-import { checkIfInstalled, getTokenDate, getFacebookToken } from 'utils/runtime';
+import { checkIfInstalled, getTokenDate, getFacebookToken, checkVersion } from 'utils/runtime';
 import LS from 'utils/localStorage';
 
 import Welcome from '../Welcome';
@@ -18,12 +18,25 @@ import '../../styles/globals.scss';
 class App extends Component {
   state = {
     isInstalled: null,
+    isOutdated: false,
     isFirstLogin: !LS.data.lastActivity,
   }
 
   componentDidMount() {
     checkIfInstalled((isInstalled) => {
       this.setState({ isInstalled });
+
+      if (!isInstalled) {
+        return;
+      }
+
+      checkVersion((ver) => {
+        if (ver !== '0.3.0') {
+          this.setState({
+            isOutdated: true,
+          });
+        }
+      });
     });
   }
 
@@ -43,9 +56,8 @@ class App extends Component {
   }
 
   render() {
-    const { isInstalled, isFirstLogin } = this.state;
-
-    if (isInstalled) {
+    const { isInstalled, isFirstLogin, isOutdated } = this.state;
+    if (isInstalled && !isOutdated) {
       if (isFirstLogin) {
         return (
           <Welcome handleConnect={this.handleConnect} isInstalled={isInstalled} />
@@ -62,6 +74,10 @@ class App extends Component {
     } else if (isInstalled === false) {
       return (
         <Welcome handleConnect={this.handleConnect} isInstalled={isInstalled} />
+      );
+    } else if (isOutdated) {
+      return (
+        <Welcome handleConnect={this.handleConnect} isOutdated={isOutdated} isInstalled={isInstalled} />
       );
     }
 
